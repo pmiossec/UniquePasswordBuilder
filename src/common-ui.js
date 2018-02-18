@@ -39,7 +39,89 @@ var hideData = function() {
     }
 };
 
-var verifyAndComputePassword = function(saveInputs, evt) {
+// Defined here but values set by UI scripts...
+var onEnter;
+
+var save = function(key, inputs) {
+    try {
+        var data = {};
+        data[key] = inputs;
+        chrome.storage.local.set(data);
+    } catch(ex) {
+        switch(key) {
+            case 'prefs':
+                localStorage.algorithm = inputs.algorithm;
+                localStorage.difficulty = inputs.difficulty;
+                localStorage.difficultyArgon2 = inputs.difficultyArgon2;
+                localStorage.usersalt = inputs.usersalt;
+                localStorage.hideSensitiveData = inputs.hideSensitiveData;
+                localStorage.options = inputs.options;
+            default:
+                localStorage[key] = JSON.stringify(inputs);
+        }
+    }
+};
+
+var savePrefs = function() {
+    save('prefs', {
+        'algorithm': algorithmInput.value,
+        'difficulty': difficultyScryptInput.value,
+        'difficultyArgon2': difficultyArgon2Input.value,
+        'usersalt': usersaltInput.value,
+        'hideSensitiveData': hideSensitiveData.checked,
+        'options': !optionsDiv.classList.contains('hidden')
+    });
+}
+
+var hydrateUi = function (data) {
+    algorithmInput.value = data.algorithm;
+    difficultyScryptInput.value = data.difficulty;
+    difficultyArgon2Input.value = data.difficultyArgon2;
+    usersaltInput.value = data.usersalt;
+    hideSensitiveData.checked = data.hideSensitiveData === 'true';
+    data.options && optionsDiv.classList.remove('hidden');
+    changeAlgorithm();
+};
+
+var loadPrefs = function() {
+    loadKey('prefs', hydrateUi);
+}
+
+var loadKey = function(key, loadCallback) {
+    try {
+        chrome.storage.local.get(key, function(data) {
+            console.log('loaded data', data);
+            var loadedData = (key === 'prefs') ? {
+                    algorithm: data.prefs.algorithm || UniquePasswordBuilder.SCRYPT,
+                    difficulty: data.prefs.difficulty || 8192,
+                    difficultyArgon2: data.prefs.difficultyArgon2  || 10,
+                    usersalt: data.prefs.usersalt || '',
+                    hideSensitiveData: data.prefs.hideSensitiveData === 'true',
+                    options: data.prefs.options || false
+                } : data[key];
+            loadCallback(loadedData);
+        });
+    } catch(ex) {
+        switch(key) {
+            case 'prefs':
+                loadCallback({
+                    algorithm: localStorage.algorithm || UniquePasswordBuilder.SCRYPT,
+                    difficulty: localStorage.difficulty || 8192,
+                    difficultyArgon2: localStorage.difficultyArgon2  || 10,
+                    usersalt: localStorage.usersalt || '',
+                    hideSensitiveData: localStorage.hideSensitiveData === 'true',
+                    options: localStorage.options || false
+                })
+            default:
+                var data = localStorage[key];
+                if(data) {
+                    loadCallback(JSON.parse(data));
+                }
+        }
+    }
+}
+
+var verifyAndComputePassword = function(evt) {
     try {
         outputField.classList.remove('error');
         outputField.classList.remove('hide');
@@ -78,20 +160,18 @@ var verifyAndComputePassword = function(saveInputs, evt) {
             updatePasswordField("Generating password...");
             UniquePasswordBuilder.generate(algorithm, locationSalt, difficulty, passwordInput.value, usersalt, function(password) {
                 updatePasswordField(password);
-                saveInputs();
+                savePrefs();
+                save('config_' + locationSalt, {
+                    'algorithm': algorithm,
+                    'difficulty': difficultyScryptInput.value,
+                    'difficultyArgon2': difficultyArgon2Input.value,
+                    'usersalt': usersaltInput.value
+                })
             }, true);
         }
     } catch(e) {
         setErrorMessage(e, true);
     }
-};
-
-//save is set by UI scripts...
-var save;
-var onEnter;
-
-var go = function(evt) {
-    verifyAndComputePassword(save, evt);
 };
 
 var timeout = null;
@@ -101,7 +181,7 @@ var delay = function(fn) {
 };
 
 var compute = function(evt) {
-    return delay.bind(this, go(evt));
+    return delay.bind(this, verifyAndComputePassword(evt));
 };
 
 var changeAlgorithm = function() {
@@ -130,8 +210,18 @@ var copyTextToClipboard = function(value) {
     return false;
 };
 
+var urlChanged = function() {
+    var locationSalt = UniquePasswordBuilder.getSaltOnLocation(urlInput.value);
+    loadKey('config_' + locationSalt, function(data) {
+        if(data) {
+            hydrateUi(data);
+        }
+        compute();
+    })
+}
+
 algorithmInput.addEventListener('change', changeAlgorithm, false);
-urlInput.addEventListener('keyup', compute, false);
+urlInput.addEventListener('keyup', urlChanged, false);
 passwordInput.addEventListener('keyup', compute, false);
 difficultyScryptInput.addEventListener('change', compute, false);
 difficultyArgon2Input.addEventListener('change', compute, false);
