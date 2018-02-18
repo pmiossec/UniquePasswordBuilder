@@ -123,25 +123,6 @@
                     displayInfos();
                 }
 
-                var load = function() {
-                    algorithmInput.value = localStorage.algorithm || UniquePasswordBuilder.SCRYPT;
-                    difficultyScryptInput.value = localStorage.difficulty || 8192;
-                    if (localStorage.difficultyArgon2) difficultyArgon2Input.value = localStorage.difficultyArgon2 | 10;
-                    if (localStorage.usersalt) usersaltInput.value = localStorage.usersalt;
-                    hideSensitiveData.checked = localStorage.hideSensitiveData === 'true';
-                    localStorage.options && optionsDiv.classList.remove('hidden');
-                    changeAlgorithm();
-                }
-
-                save = function() {
-                    localStorage.algorithm = algorithmInput.value;
-                    localStorage.difficulty = difficultyScryptInput.value;
-                    localStorage.difficultyArgon2 = difficultyArgon2Input.value;
-                    localStorage.usersalt = usersaltInput.value;
-                    localStorage.hideSensitiveData = hideSensitiveData.checked;
-                    localStorage.options = !optionsDiv.classList.contains('hidden');
-                }
-
                 var copyBookmarkletToClipboard = function() {
                     var algorithmParameters;
                     if (algorithmInput.value === 'argon2') {
@@ -157,7 +138,7 @@
                 displayInfosLink.addEventListener('click', displayInfos, false);
                 document.getElementById('copyBookmarkletToClipboard').addEventListener('click', copyBookmarkletToClipboard, false);
 
-                load();
+                loadPrefs();
 
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.register('./sw.js').then(function() {
