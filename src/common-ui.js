@@ -8,12 +8,17 @@ var difficultyScryptInput         = document.getElementById('difficultyScrypt');
 var difficultyArgon2Input         = document.getElementById('difficultyArgon2');
 var usersaltInput                 = document.getElementById('usersalt');
 var hideSensitiveData             = document.getElementById('hideSensitiveData');
+var passwordWithSpecialChars      = document.getElementById('passwordWithSpecialChars');
+var passwordWithNumbers           = document.getElementById('passwordWithNumbers');
+var passwordWithLetters           = document.getElementById('passwordWithLetters');
+var passwordLength                = document.getElementById('passwordLength');
 var outputField                   = document.getElementById('output');
 var copyToClipboardBtn            = document.getElementById('copyToClipboardBtn');
 var optionsLink                   = document.querySelector('a.options');
 var optionsDiv                    = document.querySelector('div.options');
 
 var updatePasswordField = function(text) {
+    console.log('generated password', text)
     setTimeout(function () {
         outputField.textContent = text;
     }, 0);
@@ -43,6 +48,19 @@ var hideData = function() {
     }
 };
 
+var isChecked = function(button) {
+    return button.classList.contains('checked');
+}
+
+var toggleButton = function(button) {
+    if (isChecked(button)) {
+        button.classList.replace('checked', 'unchecked');
+    }
+    else {
+        button.classList.replace('unchecked', 'checked');
+    }
+}
+
 var verifyAndComputePassword = function(saveInputs, evt) {
     try {
         outputField.classList.remove('error');
@@ -71,7 +89,8 @@ var verifyAndComputePassword = function(saveInputs, evt) {
             }
 
             updatePasswordField("Generating password...");
-            var algoParams = { algorithm: algorithm, locationSalt: locationSalt, difficulty: difficulty, masterPassword: passwordInput.value, userSalt: usersalt };
+            var algoParams = { algorithm: algorithm, locationSalt: locationSalt, difficulty: difficulty, masterPassword: passwordInput.value, userSalt: usersalt,
+                 passwordFormat: {specialChars : isChecked(passwordWithSpecialChars), numbers: isChecked(passwordWithNumbers), letters : isChecked(passwordWithLetters), length: passwordLength.value} };
             UniquePasswordBuilder.generate(algoParams, function(password) {
                 updatePasswordField(password);
                 saveInputs();
@@ -93,6 +112,12 @@ var save;
 var onEnter;
 
 var timeout = null;
+
+var toggleAndCompute = function(evt) {
+    evt.preventDefault();
+    toggleButton(this);
+    compute(evt);
+};
 
 var compute = function(evt) {
     clearTimeout(timeout);
@@ -132,5 +157,9 @@ difficultyArgon2Input.addEventListener('change', compute, false);
 usersaltInput.addEventListener('keyup', compute, false);
 usersaltInput.addEventListener('change', compute, false);
 hideSensitiveData.addEventListener('change', hideData, false);
+passwordWithSpecialChars.addEventListener('click', toggleAndCompute, false);
+passwordWithNumbers.addEventListener('click', toggleAndCompute, false);
+passwordWithLetters.addEventListener('click', toggleAndCompute, false);
+passwordLength.addEventListener('change', compute, false);
 optionsLink.addEventListener('click', toggleOptions, false);
 copyToClipboardBtn.addEventListener('click', copyToClipboard, false);

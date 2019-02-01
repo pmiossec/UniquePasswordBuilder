@@ -1,3 +1,9 @@
+<script>
+    function updateLength(step) {
+        var passwordLength                = document.getElementById('passwordLength');
+        passwordLength.value = Number.parseInt(passwordLength.value) + step;
+    }
+</script>
 <form>
     <fieldset>
         <label>
@@ -46,7 +52,12 @@
             <label>User salt:
                 <input type="text" id="usersalt" value="" maxlength="80" />
             </label>
-        </div>
+            Password output format:
+                <button id="passwordWithNumbers" class="toggle checked">0-9</button> &nbsp;
+                <button id="passwordWithLetters" class="toggle checked">a-Z</button> &nbsp;
+                <button id="passwordWithSpecialChars" class="toggle checked">?#%</button> &nbsp;
+                Length <span class="input-group-btn"><button id="decreaseLength" type="button" onclick="updateLength(-1)" class="btn-length"><small><i class="fa fa-minus"></i></small></button></span><input type="number" id="passwordLength" value="16" min="4" max="40" /><span class="input-group-btn"><button id="increaseLength" type="button" onclick="updateLength(1)" class="btn-length"><small><i class="fa fa-plus"></i></small></button></span>
+            </div>
         <label>
             <span id="output"></span>
             <i class="fa fa-clipboard" aria-hidden="true" id="copyToClipboardBtn" class="hidden" title="Copy to clipboard"></i>

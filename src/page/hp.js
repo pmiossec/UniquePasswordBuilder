@@ -24,6 +24,9 @@
         if (localStorage.difficultyArgon2) difficultyArgon2Input.value = localStorage.difficultyArgon2 | 10
         if (localStorage.usersalt) usersaltInput.value = localStorage.usersalt
         if (localStorage.options === 'true') optionsDiv.classList.remove('hidden')
+        if (localStorage.passwordWithSpecialChars === 'false') toggleButton(passwordWithSpecialChars)
+        if (localStorage.passwordWithNumbers === 'false') toggleButton(passwordWithNumbers)
+        if (localStorage.passwordWithLetters === 'false') toggleButton(passwordWithLetters)
         changeAlgorithm()
         renderDomains()
     }
@@ -34,6 +37,9 @@
         localStorage.difficultyArgon2 = difficultyArgon2Input.value
         localStorage.usersalt = usersaltInput.value
         localStorage.hideSensitiveData = hideSensitiveData.checked
+        localStorage.passwordWithSpecialChars = isChecked(passwordWithSpecialChars)
+        localStorage.passwordWithNumbers = isChecked(passwordWithNumbers)
+        localStorage.passwordWithLetters = isChecked(passwordWithLetters)
         localStorage.options = !optionsDiv.classList.contains('hidden')
     }
 

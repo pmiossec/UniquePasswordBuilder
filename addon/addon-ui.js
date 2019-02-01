@@ -8,6 +8,10 @@ save = function() {
             'difficultyArgon2': difficultyArgon2Input.value,
             'usersalt': usersaltInput.value,
             'hideSensitiveData': hideSensitiveData.checked,
+            'passwordWithSpecialChars': passwordWithSpecialChars.checked,
+            'passwordWithNumbers': passwordWithNumbers.checked,
+            'passwordWithLetters': passwordWithLetters.checked,
+            'passwordLength': passwordLength.value,
             'options': !optionsDiv.classList.contains('hidden')
         }
     });
@@ -22,6 +26,10 @@ function load (data) {
         difficultyScryptInput.value = data.prefs.difficulty || "8192";
         difficultyArgon2Input.value = data.prefs.difficultyArgon2 || 10;
         usersaltInput.value = data.prefs.usersalt || '';
+        passwordWithSpecialChars.checked = data.prefs.passwordWithSpecialChars;
+        passwordWithNumbers.checked = data.prefs.passwordWithNumbers;
+        passwordWithLetters.checked = data.prefs.passwordWithLetters;
+        passwordLength.value = data.prefs.passwordLength;
         data.prefs.options && optionsDiv.classList.remove('hidden');
     } else {
         algorithmInput.value = UniquePasswordBuilder.SCRYPT;

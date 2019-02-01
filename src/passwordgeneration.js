@@ -9,14 +9,47 @@
     var passwordLength = 16;
     upb.SCRYPT = 'scrypt';
     upb.ARGON2 = 'argon2';
-    var availableChars = '!$+-=_.:;,?#%&()[]' + '0123456789' + 'abcdefghijklmnopqrstuvwxyz' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var availableSpecialChars = '!$+-=_.:;,?#%&()[]';
+    var availableNumbers = '0123456789';
+    var availableLetters = 'abcdefghijklmnopqrstuvwxyz' + 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    var allChars = availableSpecialChars + availableNumbers + availableLetters;
 
-    upb.makeHashHumanReadable = function(array) {
+    upb.makeHashHumanReadablePassword = function(array) {
+        var passwordFormat = upb.passwordFormat;
+        if (passwordFormat) {
+            var chars = '';
+            if(passwordFormat.specialChars) {
+                chars += availableSpecialChars;
+            }
+
+            if(passwordFormat.numbers) {
+                chars += availableNumbers;
+            }
+
+            if(passwordFormat.letters) {
+                chars += availableLetters;
+            }
+
+            if(chars.length === 0) {
+                chars = allChars;
+            }
+
+            console.log('will generate with:' + chars)
+            return upb.makeHashHumanReadableString(array, chars);
+        }
+        else {
+            return upb.makeHashHumanReadableString(array, allChars);
+        }
+    }
+
+    upb.makeHashHumanReadableString = function(array, availableCharacters) {
         var password = '';
+        console.log('will generate with2:', array, availableCharacters)
         for(var i = 0; i < array.length; i+=2) {
             var v = array[i] + array[i+1]; // 6.32 bits per character of entropy, @see https://github.com/paulgreg/UniquePasswordBuilder/issues/17
-            password += availableChars[v % availableChars.length];
+            password += availableCharacters[v % availableCharacters.length];
         }
+        console.log('password, password:', password)
         return password;
     };
 
@@ -55,7 +88,8 @@
         if (!algoParams.masterPassword) {
             throw new Error('master password should not be empty');
         }
-        var hashLength = 2 * passwordLength;
+        upb.passwordFormat = algoParams.passwordFormat;
+        var hashLength = 2 * (algoParams.passwordFormat && algoParams.passwordFormat.length ? algoParams.passwordFormat.length : passwordLength);
         var t = +new Date();
         if(algoParams.algorithm === 'scrypt') {
             var userSalt = algoParams.userSalt && algoParams.userSalt != 0 ? "-keyidx:" + algoParams.userSalt : ""; // keyidx is here for legacy reason, to avoid changing password
@@ -67,7 +101,7 @@
             var logN = Math.log2(difficulty);
 
             scrypt(algoParams.masterPassword, salt, logN, 8, hashLength, function(hashedPassword) {
-                var outputPassword = upb.makeHashHumanReadable(hashedPassword);
+                var outputPassword = upb.makeHashHumanReadablePassword(hashedPassword);
 
                 if (!nolog && console && console.log) {
                     var timeMessage = ' in ' + ((+new Date()) - t) / 1000 + ' seconds';
@@ -104,7 +138,9 @@
             applyArgon2(algoParams.masterPassword, argon2.ArgonType.Argon2i, function (hashArgon2i) {
                 //  console.log("======>hash", Argon2i.hashHex, Argon2i.encoded);
                 applyArgon2(hashArgon2i.hashHex, argon2.ArgonType.Argon2d, function (hashArgon2d) {
-                    var outputPassword = upb.makeHashHumanReadable(hashArgon2d.hash);
+                    console.log('Argon2 debug', hashArgon2d, algoParams.passwordFormat)
+                    var outputPassword = upb.makeHashHumanReadablePassword(hashArgon2d.hash);
+                    console.log('Argon2 debug password', outputPassword)
 
                     if (!nolog && console && console.log) {
                         var timeMessage = ' in ' + ((+new Date()) - t) / 1000 + ' seconds';
