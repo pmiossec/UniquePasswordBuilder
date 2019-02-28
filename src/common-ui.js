@@ -8,9 +8,9 @@ var difficultyScryptInput         = document.getElementById('difficultyScrypt');
 var difficultyArgon2Input         = document.getElementById('difficultyArgon2');
 var usersaltInput                 = document.getElementById('usersalt');
 var hideSensitiveData             = document.getElementById('hideSensitiveData');
-var passwordWithSpecialChars      = document.getElementById('passwordWithSpecialChars');
 var passwordWithNumbers           = document.getElementById('passwordWithNumbers');
 var passwordWithLetters           = document.getElementById('passwordWithLetters');
+var passwordWithSpecialChars      = document.getElementById('passwordWithSpecialChars');
 var passwordLength                = document.getElementById('passwordLength');
 var outputField                   = document.getElementById('output');
 var copyToClipboardBtn            = document.getElementById('copyToClipboardBtn');
@@ -54,11 +54,19 @@ var isChecked = function(button) {
 
 var toggleButton = function(button) {
     if (isChecked(button)) {
-        button.classList.replace('checked', 'unchecked');
+        uncheckButton(button);
     }
     else {
-        button.classList.replace('unchecked', 'checked');
+        checkButton(button);
     }
+}
+
+var checkButton = function(button) {
+    button.classList.replace('unchecked', 'checked');
+}
+
+var uncheckButton = function(button) {
+    button.classList.replace('checked', 'unchecked');
 }
 
 var verifyAndComputePassword = function(saveInputs, evt) {
@@ -157,9 +165,11 @@ difficultyArgon2Input.addEventListener('change', compute, false);
 usersaltInput.addEventListener('keyup', compute, false);
 usersaltInput.addEventListener('change', compute, false);
 hideSensitiveData.addEventListener('change', hideData, false);
-passwordWithSpecialChars.addEventListener('click', toggleAndCompute, false);
 passwordWithNumbers.addEventListener('click', toggleAndCompute, false);
 passwordWithLetters.addEventListener('click', toggleAndCompute, false);
+passwordWithSpecialChars.addEventListener('click', toggleAndCompute, false);
 passwordLength.addEventListener('change', compute, false);
+decreaseLength.addEventListener('click', compute, false);
+increaseLength.addEventListener('click', compute, false);
 optionsLink.addEventListener('click', toggleOptions, false);
 copyToClipboardBtn.addEventListener('click', copyToClipboard, false);

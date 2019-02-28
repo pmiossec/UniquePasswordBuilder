@@ -27,6 +27,7 @@
         if (localStorage.passwordWithSpecialChars === 'false') toggleButton(passwordWithSpecialChars)
         if (localStorage.passwordWithNumbers === 'false') toggleButton(passwordWithNumbers)
         if (localStorage.passwordWithLetters === 'false') toggleButton(passwordWithLetters)
+        if (localStorage.passwordLength) passwordLength.value = localStorage.passwordLength || 16
         changeAlgorithm()
         renderDomains()
     }
@@ -40,6 +41,7 @@
         localStorage.passwordWithSpecialChars = isChecked(passwordWithSpecialChars)
         localStorage.passwordWithNumbers = isChecked(passwordWithNumbers)
         localStorage.passwordWithLetters = isChecked(passwordWithLetters)
+        localStorage.passwordLength = passwordLength.value
         localStorage.options = !optionsDiv.classList.contains('hidden')
     }
 
@@ -54,16 +56,41 @@
     displayInfosLink.addEventListener('click', displayInfos, false)
     document.getElementById('copyBookmarkletToClipboard').addEventListener('click', copyBookmarkletToClipboard, false)
 
+    algorithmInput.addEventListener('change', saveCurrentDomain, false);
+    urlInput.addEventListener('change', saveCurrentDomain, false);
+    difficultyScryptInput.addEventListener('change', saveCurrentDomain, false);
+    difficultyArgon2Input.addEventListener('change', saveCurrentDomain, false);
+    usersaltInput.addEventListener('change', saveCurrentDomain, false);
+    passwordWithNumbers.addEventListener('click', saveCurrentDomain, false);
+    passwordWithLetters.addEventListener('click', saveCurrentDomain, false);
+    passwordWithSpecialChars.addEventListener('click', saveCurrentDomain, false);
+    passwordLength.addEventListener('change', saveCurrentDomain, false);
+    decreaseLength.addEventListener('click', saveCurrentDomain, false);
+    increaseLength.addEventListener('click', saveCurrentDomain, false);
+    copyToClipboardBtn.addEventListener('click', saveCurrentDomain, false);
 
     var domainRegex = /^https?:\/\/(?:[^\/?]+)/i
-    var url = document.querySelector('#url')
-    url.addEventListener('change', function (e) {
-        if (domainRegex.test(url.value)) {
-            var domain = domainRegex.exec(url.value)
-            saveDomain(domain[0])
+
+    function saveCurrentDomain () {
+        if (url.value) {
+            var domainUrl = url.value;
+            if (domainRegex.test(url.value)) {
+                domainUrl = domainRegex.exec(url.value)[0]
+            }
+            saveDomain({url: domainUrl, settings: {
+                    algorithmInput: algorithmInput.value,
+                    difficulty: difficultyScryptInput.value,
+                    difficultyArgon2: difficultyArgon2Input.value,
+                    usersalt: usersaltInput.value,
+                    hideSensitiveData: hideSensitiveData.checked,
+                    passwordWithNumbers: isChecked(passwordWithNumbers),
+                    passwordWithLetters: isChecked(passwordWithLetters),
+                    passwordWithSpecialChars: isChecked(passwordWithSpecialChars),
+                    passwordLength: passwordLength.value
+            }})
             renderDomains()
         }
-    }, false)
+    }
 
     function getDomains () {
         var domains = localStorage.domains
@@ -82,11 +109,12 @@
         return arr
     };
 
-    function saveDomain (domain) {
+    function saveDomain(domain) {
         var domains = getDomains()
-        var idx = domains.indexOf(domain)
+        var idx = domains.map(function(d) { return d.url; }).indexOf(domain.url)
         if (idx !== -1) {
             moveOnTop(domains, idx)
+            domains[0] = domain
         } else {
             domains.unshift(domain)
         }
@@ -99,16 +127,25 @@
         }
     }
 
-    function selectDomain (domain) {
-        url.value = domain
+    function selectDomain(domain) {
+        url.value = domain.url
+        algorithmInput.value = domain.settings.algorithmInput
+        difficultyScryptInput.value = domain.settings.difficulty
+        difficultyArgon2Input.value = domain.settings.difficultyArgon2
+        usersaltInput.value = domain.settings.usersalt
+        hideSensitiveData.checked = domain.settings.hideSensitiveData
+        if (domain.settings.passwordWithSpecialChars) { checkButton(passwordWithSpecialChars); } else { uncheckButton(passwordWithSpecialChars); }
+        if (domain.settings.passwordWithNumbers) { checkButton(passwordWithNumbers); } else { uncheckButton(passwordWithNumbers); }
+        if (domain.settings.passwordWithLetters) { checkButton(passwordWithLetters); } else { uncheckButton(passwordWithLetters); }
+        passwordLength.value = domain.settings.passwordLength || 16
         saveDomain(domain)
         renderDomains()
         compute()
     }
 
-    function removeDomain (domain) {
+    function removeDomain(domain) {
         var domains = getDomains()
-        var idx = domains.indexOf(domain)
+        var idx = domains.map(function(d) { return d.url; }).indexOf(domain.url)
         domains.splice(idx, 1)
         localStorage.domains = JSON.stringify(domains)
         renderDomains()
@@ -126,11 +163,11 @@
         if (stop) return
 
         domains.map(function (domain) {
-            if (domain === '') return
+            if (domain === {}) return
             var li = document.createElement('li')
             var aDomain = document.createElement('a')
             var aRemove = document.createElement('a')
-            aDomain.innerText = domain
+            aDomain.innerText = domain.url
             aDomain.className = 'domain'
             aRemove.innerText = 'remove'
             aRemove.className = 'remove'
